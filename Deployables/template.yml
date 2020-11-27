@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Resources:
+
+# LAMBDA
+  
+# Email Entity
+  ESPNBPI:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ESPN_BPI
+      Description: Handles form Submission from FEND.
+      CodeUri: Lambda/ESPN_BPI/
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt BasicLambdaNoAccess.Arn
+      Runtime: python3.7
+      Timeout: 120
+      MemorySize: 2048
+      Events:
+        API:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref ScraperAPI
+            Method: GET
+            Path: /espn/bpi
+            TimeoutInMillis: 15000
+            PayloadFormatVersion: "2.0"
+            RouteSettings:
+              ThrottlingBurstLimit: 100
+  
+
+# API Gateway HTTP
+  ScraperAPI:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: 'Prod'
+      AccessLogSettings:
+        DestinationArn: !GetAtt AccessLogs.Arn
+        Format: $context.requestId
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 200
+      FailOnWarnings: True
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - "*"
+
+  AccessLogs:
+    Type: AWS::Logs::LogGroup
+
+# IAM
+
+  BasicLambdaNoAccess:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: Lambda_Basic
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 
+              - "lambda.amazonaws.com"
+          Action: 
+            - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/CloudWatchFullAccess"
+      Path: "/"
+  
+
+ 

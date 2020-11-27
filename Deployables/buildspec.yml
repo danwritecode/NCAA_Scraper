@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.7
+    commands:
+      - pip install aws-sam-cli
+      - USER_BASE_PATH=$(python -m site --user-base)
+      - export PATH=$PATH:$USER_BASE_PATH/bin
+  pre_build:
+    commands:
+      - sam build --template-file Deployables/template.yml
+  build:
+    commands:
+      - sam package --template-file Deployables/template.yml --output-template-file Deployables/packaged.yaml --s3-bucket scrapersamtemplate
+  post_build:
+    commands:
+      - sam deploy --region us-east-1 --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM --stack-name NCAAScraper --s3-bucket scrapersamtemplate
+artifacts:
+  type: zip
+  files:
+    - Deployables/packaged.yaml
