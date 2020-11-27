@@ -62,6 +62,7 @@ def getBPIData():
 
         fullDataSet += teamData
 
+    fullDataSet.pop(0)
     return(fullDataSet)
 
 
